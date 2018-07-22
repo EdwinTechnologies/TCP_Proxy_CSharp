@@ -1,4 +1,4 @@
-﻿/*
+/*
  * 
  * © EdwinTechnologies 2018
  * 
@@ -21,41 +21,36 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using ProxyIO;
 
 namespace ProxyServer
 {
-    class TCP_Proxy
+    public static class TCP_Proxy
     {
-        public static int BufferSize = 1;   // 'Read' Buffer Size
-        
-        /***************************************************************/
+        public static int BufferSize = 4096;   // 'Read' Buffer Size
 
-        public static Int32 SourcePort = 22;                 //Client connects to this Port
-        public static IPAddress LocalHostIP = IPAddress.Parse("192.168.178.39");            //IP of this machine
+        public static bool InjectMode = true;
+
+        public static bool PwnAdventure3 = false;
+
+        /**************************** Client -> Proxy Settings ***********************************/
+
+        public static Int32 SourcePort = 81;                 //Client connects to this Port
+        public static IPAddress LocalHostIP = IPAddress.Parse("192.168.1.17");            //IP of this machine
         public static IPEndPoint SourceHost = new IPEndPoint(LocalHostIP, SourcePort);
 
         public static byte[] SourceToProxyBuffer;
-        public static List<byte> SourceBuffer = new List<byte>();
+
+        /**************************** Proxy -> Server Settings ***********************************/
 
 
-
-        /***************************************************************/
-
-
-
-
-        public static Int32 DrainPort = 22;          //Proxy connects to this Port of the remote Server
-        public static IPAddress DrainIP = IPAddress.Parse("192.168.178.35");       //IP of the remote Server
+        public static Int32 DrainPort = 31416;          //Proxy connects to this Port of the remote Server
+        public static IPAddress DrainIP = IPAddress.Parse("79.240.81.32");       //IP of the remote Server
         public static IPEndPoint DrainHost = new IPEndPoint(DrainIP, DrainPort);
 
-
         public static byte[] ProxyToDrainBuffer;
-        public static List<byte> DrainBuffer = new List<byte>();
-
-
 
         /***************************************************************/
-
 
 
         public static Socket DrainClient = new Socket(DrainHost.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -67,38 +62,40 @@ namespace ProxyServer
         /***************************************************************/
 
 
-        public static string ByteToHex(byte[] byteData)
+        public static void Init()
         {
-            return BitConverter.ToString(byteData).Replace("-", string.Empty);
-        }
+            Console.WriteLine("╔══════════════════════════╗");
+            Console.WriteLine("║    TCP Proxy # V. 2.1    ║");
+            Console.WriteLine("╚══════════════════════════╝");
+            Console.WriteLine("     ");
+            Console.WriteLine("[Proxy] " + LocalHostIP.ToString() + ":" + SourcePort.ToString() + " -> " + "[Server] " + DrainIP.ToString() + ":" + DrainPort.ToString());
 
-        public static void Init ()
-        {
-            Console.WriteLine("Current Settings: \n");
-            Console.WriteLine("Local-IP: " + LocalHostIP.ToString() + "\n");
-            Console.WriteLine("Server-IP: " + DrainIP.ToString() + "\n");
-            Console.WriteLine("[Client -> Proxy] Port: " + SourcePort.ToString() + "\n");
-            Console.WriteLine("[Proxy -> Server] Port: " + DrainPort.ToString() + "\n");
+            Console.WriteLine("     ");
 
 
             string Yes_No;
             Console.Write("Is this configuration okay? [Y/N] ");
             Yes_No = Console.ReadLine();
+            Console.WriteLine("     ");
 
             if (Yes_No == "n" || Yes_No == "N")
             {
                 Console.Write("Local IPv4-Address? ");
                 LocalHostIP = IPAddress.Parse(Console.ReadLine());
+                Console.WriteLine("     ");
 
                 Console.Write("Server-IP? ");
                 DrainIP = IPAddress.Parse(Console.ReadLine());
+                Console.WriteLine("     ");
 
                 Console.Write("[Client -> Proxy] Port? ");
                 SourcePort = Int32.Parse(Console.ReadLine());
+                Console.WriteLine("     ");
 
                 Console.Write("[Proxy -> Server] Port? ");
                 DrainPort = Int32.Parse(Console.ReadLine());
-                Console.WriteLine("\n");
+                Console.WriteLine("     ");
+                Console.WriteLine("════════════════════════ \n");
 
                 DrainHost = new IPEndPoint(DrainIP, DrainPort);
                 SourceHost = new IPEndPoint(LocalHostIP, SourcePort);
@@ -110,7 +107,109 @@ namespace ProxyServer
         }
 
 
+
+        public static void InjectPacket()
+        {
+            Console.WriteLine("Proxy is in Inject-Mode! ");
+            byte[] PacketBuffer = new byte[1];
+
+            while (true && InjectMode)
+            {
+                Console.Write("$ ");
+
+                string input = Console.ReadLine();
+                if (input == "SRV" || input == "srv")
+                {
+                    while (true)
+                    {
+                        Console.Write("Inject Packet -> Server $ ");
+                        input = Console.ReadLine();
+
+                        if (input == "exit")
+                        {
+                            break;
+                        }
+
+                        PacketBuffer = PacketParser.HexToByteArray(input);
+                        DrainClient.Send(PacketBuffer);
+                        Console.WriteLine("Injected into Stream!");
+                    }
+
+                }
+                else if (input == "CLI" || input == "cli")
+                {
+                    while (true)
+                    {
+                        Console.Write("Inject Packet -> Client $ ");
+                        input = Console.ReadLine();
+
+                        if (input == "exit")
+                        {
+                            break;
+                        }
+
+                        PacketBuffer = PacketParser.HexToByteArray(input);
+                        SourceHandler.Send(PacketBuffer);
+                        Console.WriteLine("Injected into Stream!");
+                    }
+                }
+                else if (input == "Monitor")
+                {
+                    Console.WriteLine("======= Monitoring-Mode =======");
+                    InjectMode = false;
+                }
+                else if (input == "Firestorm")
+                {
+                    DrainClient.Send(PacketParser.HexToByteArray("2a691000477265617442616c6c734f6646697265000000000000000000000000"));
+                    Thread.Sleep(400);
+                    DrainClient.Send(PacketParser.HexToByteArray("2a691000477265617442616c6c734f6646697265000000000000344200000000"));
+                    Thread.Sleep(400);
+                    DrainClient.Send(PacketParser.HexToByteArray("2a691000477265617442616c6c734f6646697265000000000000b44200000000"));
+                    Thread.Sleep(400);
+                    DrainClient.Send(PacketParser.HexToByteArray("2a691000477265617442616c6c734f6646697265000000000000074300000000"));
+                    Thread.Sleep(400);
+                    DrainClient.Send(PacketParser.HexToByteArray("2a691000477265617442616c6c734f6646697265000000000000344300000000"));
+                    Thread.Sleep(400);
+                    DrainClient.Send(PacketParser.HexToByteArray("2a691000477265617442616c6c734f6646697265000000000000614300000000"));
+                    Thread.Sleep(400);
+                    DrainClient.Send(PacketParser.HexToByteArray("2a691000477265617442616c6c734f6646697265000000000000874300000000"));
+                    Thread.Sleep(400);
+                    DrainClient.Send(PacketParser.HexToByteArray("2a691000477265617442616c6c734f66466972650000000000809d4300000000"));
+                }
+                //else if (input == "Mana")
+                //{
+                //    while (true)
+                //    {
+                //        SourceHandler.Send(PacketParser.HexToByteArray("6D615C000000"));
+                //        Thread.Sleep(10);
+                //    }
+
+                //}
+                //else if (input == "HH")
+                //{
+                //    Int32 i = 999;
+
+                //    while(i > 0)
+                //    {
+                //        string _Packet = "";
+
+                //        string HealthHash = i.ToString("X8");
+
+                //        _Packet = "2B2B" + HealthHash + "24000000";
+
+                //        Console.WriteLine(_Packet);
+                //        _Packet = Reverse(_Packet);
+                //        Thread.Sleep(500);
+                //        SourceHandler.Send(PacketParser.HexToByteArray(_Packet));
+                //        i--;
+                //    }
+                //}
+                }
+        }
+
+
         /***************************************************************/
+
 
         static void Main(string[] args)
         {
@@ -122,9 +221,6 @@ namespace ProxyServer
         }
 
 
-
-
-
         /***************************************************************/
 
 
@@ -132,7 +228,7 @@ namespace ProxyServer
 
         public static void SourceToProxy()          //Local Proxy Server waiting for connection, the real Client will be connected here
         {
-            SourceToProxyBuffer = new Byte[BufferSize];     //Create 'read' Buffer
+            SourceToProxyBuffer = new byte[BufferSize];     //Create 'read' Buffer
 
             try
             {
@@ -153,9 +249,9 @@ namespace ProxyServer
 
                 while (true)
                 {
-                    SourceToProxyBuffer = new Byte[BufferSize];     //Clear 'read' Buffer
+                    SourceToProxyBuffer = new byte[BufferSize];     //Clear 'read' Buffer
 
-                    int lenght = SourceHandler.Receive(SourceToProxyBuffer);    //Read Data from Client
+                    int lenght = SourceHandler.Receive(SourceToProxyBuffer, SourceToProxyBuffer.Length, 0);    //Read Data from Client
 
 
                     while (!DrainClient.Connected)      //Don't do anything if Proxy hasn't connected to the remote Server
@@ -163,28 +259,29 @@ namespace ProxyServer
 
                     }
 
-                    if (SourceBuffer.Count >= 50)   //SourceBuffer is a list for displaying the read data (50 Byte chuncks)
+                    if (!InjectMode)
                     {
-                        if (lenght != 0)
+                        if (PwnAdventure3)
                         {
-                            Console.WriteLine("[Client -> Server] " + ByteToHex(SourceBuffer.ToArray()));       //Display the chunck
+                            PacketParser.CheckForClientsData(Decode(SourceToProxyBuffer), lenght);
                         }
-                        SourceBuffer.Clear();
-                    }
-                    else
-                    {
-                        SourceBuffer.Add(SourceToProxyBuffer[0]);
+                        else
+                        {
+                            Console.WriteLine("[Client -> Server] " + PacketParser.ByteToHex(Decode(SourceToProxyBuffer)));
+                        }
                     }
 
 
-                    DrainClient.Send(SourceToProxyBuffer);      //Forward the read Data to Server
+                    DrainClient.Send(SourceToProxyBuffer, lenght, SocketFlags.None);      //Forward the read Data to Server
 
                 }
 
             }
             catch (Exception e)
             {
-                Console.WriteLine("Source [Real Client] can't connect to the Proxy | " + e);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("### Connection Problems with Client ### " + e);
+                Console.ResetColor();
             }
 
         }
@@ -192,48 +289,64 @@ namespace ProxyServer
 
         /***************************************************************/
 
+        public static byte[] Decode(byte[] array)       //Filter the trailing 0x0's out of the Array to get a cleaner look
+        {
+            int lastIndex = Array.FindLastIndex(array, b => b != 0);
+
+            Array.Resize(ref array, lastIndex + 1);
+
+            return array;
+        }
 
         public static void ProxyToDrain()       //Proxy-Client will connect to the remote Server
         {
 
             Console.WriteLine("Trying to connect to Drain [Real Server] ...");
 
-            ProxyToDrainBuffer = new Byte[BufferSize];      //Create 'read' Buffer
+            ProxyToDrainBuffer = new byte[BufferSize];      //Create 'read' Buffer
 
             try
             {
                 DrainClient.Connect(DrainHost);
                 Console.WriteLine("Successfully connected to Drain [Real Server]");
 
+                if (InjectMode)
+                {
+                    Thread InjectPacketThread = new Thread(InjectPacket);     //Start Client -> Proxy Thread
+                    InjectPacketThread.Start();
+                }
 
                 while (true)
                 {
-                    ProxyToDrainBuffer = new Byte[BufferSize];     //Clear 'read' Buffer
+                    ProxyToDrainBuffer = new byte[BufferSize];     //Clear 'read' Buffer
+                    
+                    int lenght = DrainClient.Receive(ProxyToDrainBuffer, ProxyToDrainBuffer.Length, 0);    //Read Data from Server
 
-                    int lenght = DrainClient.Receive(ProxyToDrainBuffer);    //Read Data from Server
 
-
-                    if (DrainBuffer.Count >= 50)   //DrainBuffer is a list for displaying the read data (50 Byte chuncks)
+                    if (!InjectMode)
                     {
-                        if (lenght != 0)
+                        if (PwnAdventure3)
                         {
-                            Console.WriteLine("[Server -> Client] " + ByteToHex(DrainBuffer.ToArray()));        //Display the chunck
+                            PacketParser.CheckForServersData(Decode(ProxyToDrainBuffer), lenght);
                         }
-                        DrainBuffer.Clear();
-                    }
-                    else
-                    {
-                        DrainBuffer.Add(ProxyToDrainBuffer[0]);
+                        else
+                        {
+                            Console.WriteLine("[Server -> Client] " + PacketParser.ByteToHex(Decode(ProxyToDrainBuffer)));
+                        }
                     }
 
-                    SourceHandler.Send(ProxyToDrainBuffer);     //Forward the read Data to Client
+                    
+                    SourceHandler.Send(ProxyToDrainBuffer, lenght, SocketFlags.None);     //Forward the read Data to Client
+                    
 
                 }
 
             }
             catch (Exception e)
             {
-                Console.WriteLine("Drain [Real Server] is not available | " + e);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("### Connection Problems with Server ### " + e);
+                Console.ResetColor();
             }
 
         }
