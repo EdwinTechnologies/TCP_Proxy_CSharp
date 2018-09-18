@@ -10,7 +10,7 @@ A TCP-Socket-Based Proxy [with PwnAdventure3 Packet Scanner] [C#/.NET]
 
 - At the top of the Main-Script (TCP_Proxy.cs) you can configure the Proxy-Settings
 
-- If turn on "Inject-Mode" you can easily inject packets in form of Hex-Strings
+- If you turn on "Inject-Mode" you can easily inject packets in form of Hex-Strings
 
 ```
 
