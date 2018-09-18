@@ -5,12 +5,12 @@ A TCP-Socket-Based Proxy [with PwnAdventure3 Packet Scanner] [C#/.NET]
 ## How To?
 
 ```
-To run the program you need to compile it with .NET or Mono
-__(more recommended than just downloading the binary)__
+- To run the program you need to compile it with .NET or Mono
+  (more recommended than just downloading the binary)
 
-At the top of the ~~Main-Script~~ (TCP_Proxy.cs) you can configure the **Proxy-Settings**
+- At the top of the Main-Script (TCP_Proxy.cs) you can configure the **Proxy-Settings**
 
-If turn on **"Inject-Mode"** you can easily **inject packets** in form of **Hex-Strings**
+- If turn on "Inject-Mode" you can easily inject packets in form of Hex-Strings
 
 ```
 
