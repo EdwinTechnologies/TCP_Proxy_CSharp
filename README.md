@@ -5,7 +5,8 @@ A TCP-Socket-Based Proxy [with PwnAdventure3 Packet Scanner] [C#/.NET]
 ## How To?
 
 ```
-To run the program you need to compile it with .NET or Mono **(more recommended than just downloading the binary)**
+To run the program you need to compile it with .NET or Mono
+__(more recommended than just downloading the binary)__
 
 At the top of the **Main-Script** (TCP_Proxy.cs) you can configure the **Proxy-Settings**
 
