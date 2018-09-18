@@ -1,4 +1,4 @@
-# TCP_Proxy_CSharp
+# TCP Proxy CSharp
 A TCP-Socket-Based Proxy [with PwnAdventure3 Packet Scanner] [C#/.NET]
 
 
